@@ -4,6 +4,7 @@
 import os
 from glob import glob
 import platform
+import fnmatch
 
 if os.environ.get('USE_SETUPTOOLS'):
     from setuptools import setup
@@ -25,9 +26,14 @@ if os.getenv('VIRTUAL_ENV', False):
     data_files.append(('etc/diamond',
                        glob('conf/*.conf.*')))
     data_files.append(('etc/diamond/collectors',
-                       glob('conf/collectors/*')))
+                       glob('conf/collectors')))
     data_files.append(('etc/diamond/handlers',
-                       glob('conf/handlers/*')))
+                       glob('conf/handlers')))
+    matches = []
+    for root, dirnames, filenames in os.walk('src/collectors'):
+      for filename in fnmatch.filter(filenames, '*'):
+          matches.append(os.path.join(root, filename))    
+    data_files.append(('share/diamond/collectors', matches))
 else:
     data_files.append(('/etc/diamond',
                        glob('conf/*.conf.*')))
@@ -94,7 +100,7 @@ def pkgPath(root, path, rpath="/"):
         if os.path.isdir(subpath):
             pkgPath(root, subpath, spath)
 
-pkgPath('share/diamond/collectors', 'src/collectors')
+#pkgPath('share/diamond/collectors', 'src/collectors')
 
 version = get_version()
 
@@ -114,3 +120,4 @@ setup(
     #test_suite='test.main',
     ** setup_kwargs
 )
+

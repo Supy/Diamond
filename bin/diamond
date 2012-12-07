@@ -1,11 +1,15 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # coding=utf-8
 
 import os
 import sys
 import configobj
-import pwd
-import grp
+try:
+    import pwd
+    import grp
+except ImportError:
+    pwd = None
+    pass
 
 try:
     from setproctitle import setproctitle
@@ -191,10 +195,11 @@ def main():
                 gid = grp.getgrnam(config['server']['group']).gr_gid
 
             # Get final UID
-            if options.user is not None:
-                uid = pwd.getpwnam(options.user).pw_uid
-            elif len(config['server']['user']):
-                uid = pwd.getpwnam(config['server']['user']).pw_uid
+            if pwd:
+                if options.user is not None:
+                    uid = pwd.getpwnam(options.user).pw_uid
+                elif len(config['server']['user']):
+                    uid = pwd.getpwnam(config['server']['user']).pw_uid
 
             # Fix up pid permissions
             if not options.foreground and not options.collector:
@@ -207,69 +212,74 @@ def main():
                     sys.exit(1)
                 pf.write("%s\n" % pid)
                 pf.close()
-                os.chown(options.pidfile, uid, gid)
+                try:
+                    os.chown(options.pidfile, uid, gid)
+                except:
+                    pass
                 # Log
                 log.debug("Wrote First PID file: %s" % (options.pidfile))
 
         # USER MANAGEMENT
-        if not options.skip_change_user:
-            # Switch user to specified user/group if required
-            try:
-                if gid != -1 and os.getgid() != gid:
-                    # Set GID
-                    os.setgid(gid)
-
-                if uid != -1 and os.getuid() != uid:
-                    # Set UID
-                    os.setuid(uid)
-
-            except Exception, e:
-                print >> sys.stderr, "ERROR: Failed to set UID/GID. %s" % (e)
-                sys.exit(1)
-
-            # Log
-            log.info('Changed UID: %d (%s) GID: %d (%s).' % (
-                os.getuid(),
-                config['server']['user'],
-                os.getgid(),
-                config['server']['group']))
-
-        # DAEMONIZE MANAGEMENT
-        if not options.skip_fork:
-            # Detatch Process
-            if not options.foreground and not options.collector:
-
-                # Double fork to serverize process
-                log.info('Detaching Process.')
-
-                # Fork 1
+        # Don't bother if we're in Windows.
+        if pwd:
+            if not options.skip_change_user:
+                # Switch user to specified user/group if required
                 try:
-                    pid = os.fork()
-                    if pid > 0:
-                        # Exit first paren
-                        sys.exit(0)
-                except OSError, e:
-                    print >> sys.stderr, "Failed to fork process." % (e)
+                    if gid != -1 and os.getgid() != gid:
+                        # Set GID
+                        os.setgid(gid)
+
+                    if uid != -1 and os.getuid() != uid:
+                        # Set UID
+                        os.setuid(uid)
+
+                except Exception, e:
+                    print >> sys.stderr, "ERROR: Failed to set UID/GID. %s" % (e)
                     sys.exit(1)
-                # Decouple from parent environmen
-                os.setsid()
-                os.umask(0)
-                # Fork 2
-                try:
-                    pid = os.fork()
-                    if pid > 0:
-                        # Exit second paren
-                        sys.exit(0)
-                except OSError, e:
-                    print >> sys.stderr, "Failed to fork process." % (e)
-                    sys.exit(1)
-                # Close file descriptors so that we can detach
-                sys.stdout.close()
-                sys.stderr.close()
-                sys.stdin.close()
-                os.close(0)
-                os.close(1)
-                os.close(2)
+
+                # Log
+                log.info('Changed UID: %d (%s) GID: %d (%s).' % (
+                    os.getuid(),
+                    config['server']['user'],
+                    os.getgid(),
+                    config['server']['group']))
+
+            # DAEMONIZE MANAGEMENT
+            if not options.skip_fork:
+                # Detatch Process
+                if not options.foreground and not options.collector:
+
+                    # Double fork to serverize process
+                    log.info('Detaching Process.')
+
+                    # Fork 1
+                    try:
+                        pid = os.fork()
+                        if pid > 0:
+                            # Exit first paren
+                            sys.exit(0)
+                    except OSError, e:
+                        print >> sys.stderr, "Failed to fork process." % (e)
+                        sys.exit(1)
+                    # Decouple from parent environmen
+                    os.setsid()
+                    os.umask(0)
+                    # Fork 2
+                    try:
+                        pid = os.fork()
+                        if pid > 0:
+                            # Exit second paren
+                            sys.exit(0)
+                    except OSError, e:
+                        print >> sys.stderr, "Failed to fork process." % (e)
+                        sys.exit(1)
+                    # Close file descriptors so that we can detach
+                    sys.stdout.close()
+                    sys.stderr.close()
+                    sys.stdin.close()
+                    os.close(0)
+                    os.close(1)
+                    os.close(2)
 
         # PID MANAGEMENT
         if not options.skip_pidfile:
@@ -326,3 +336,4 @@ if __name__ == "__main__":
     if setproctitle:
         setproctitle('diamond')
     main()
+
