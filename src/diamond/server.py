@@ -48,6 +48,29 @@ class Server(object):
         config = configobj.ConfigObj(configfile)
         config['configfile'] = self.config['configfile']
 
+        # Try make some clever assumptions about the various paths
+        # if they are not set in the config file.
+        self.diamond_root = os.environ.get("DIAMOND_ROOT", None)
+        self.config_root = os.environ.get("DIAMOND_CONFIG_DIR", os.path.join(self.diamond_root,'conf') if self.diamond_root else None)
+
+        if 'collectors_path' not in config['server']:
+            if not self.diamond_root:
+                self.log.error('Could not determine the directory path of %s. Please set it in diamond.conf or set the DIAMOND_ROOT environmental variable.' % pathname)
+                sys.exit(1)
+            config['server']['collectors_path'] = os.path.join(self.diamond_root, 'collectors')
+
+        if 'collectors_config_path' not in config['server']:
+            if not self.config_root:
+                self.log.error('Could not determine the directory path of %s. Please set it in diamond.conf or set the DIAMOND_ROOT or DIAMOND_CONFIG_DIR environmental variables.' % pathname)
+                sys.exit(1)
+            config['server']['collectors_config_path'] = os.path.join(self.config_root, 'collectors')
+
+        if 'handlers_config_path' not in config['server']:
+            if not self.config_root:
+                self.log.error('Could not determine the directory path of %s. Please set it in diamond.conf or set the DIAMOND_ROOT or DIAMOND_CONFIG_DIR environmental variables.' % pathname)
+                sys.exit(1)
+            config['server']['handlers_config_path'] = os.path.join(self.config_root, 'handlers')
+
         # Merge in handler config files into the main config
         if 'handlers_config_path' in config['server']:
             files = os.listdir(config['server']['handlers_config_path'])

@@ -20,6 +20,15 @@ group =
 # Pid file
 pid_file = /var/run/diamond.pid
 
+# You can change the paths below to suit your needs if you
+# are only going to use static paths (likely). Alternatively,
+# if these paths are commented out, Diamond will attempt to
+# use the paths defined by the DIAMOND_ROOT and DIAMOND_CONFIG_DIR
+# environmental variables to load collectors and the configs respectively.
+#
+# e.g. if you set DIAMOND_ROOT to /home/diamond/ Diamond will look for
+# collectors in /home/diamond/collectors
+
 # Directory to load collector modules from
 collectors_path = /usr/share/diamond/collectors/
 
