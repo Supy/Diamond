@@ -17,42 +17,35 @@ else:
 data_files = [
     ('share/diamond', ['LICENSE', 'README.md', 'version.txt']),
     ('share/diamond/user_scripts', []),
-]
+    ]
 
 distro = platform.dist()[0]
 distro_major_version = platform.dist()[1].split('.')[0]
 
-if os.getenv('VIRTUAL_ENV', False):
-    data_files.append(('etc/diamond',
-                       glob('conf/*.conf.*')))
-    data_files.append(('etc/diamond/collectors',
-                       glob('conf/collectors')))
-    data_files.append(('etc/diamond/handlers',
-                       glob('conf/handlers')))
-    matches = []
-    for root, dirnames, filenames in os.walk('src/collectors'):
-      for filename in fnmatch.filter(filenames, '*'):
-          matches.append(os.path.join(root, filename))    
-    data_files.append(('share/diamond/collectors', matches))
-else:
-    data_files.append(('/etc/diamond',
-                       glob('conf/*.conf.*')))
-    data_files.append(('/etc/diamond/collectors',
-                       glob('conf/collectors/*')))
-    data_files.append(('/etc/diamond/handlers',
-                       glob('conf/handlers/*')))
+is_virtual_env = os.getenv('VIRTUAL_ENV', False)
+config_path = os.environ.get('DIAMOND_CONFIG_PATH', None)
+if not config_path:
+    if is_virtual_env:
+        config_path = os.path.join('etc', 'diamond')
+    else:
+        if platform.system() == 'Windows':
+            root = os.path.splitdrive(sys.executable)[0]
+            config_path = os.path.join(root, 'diamond')
+        else:
+            config_path = os.path.join(os.path.sep, 'etc', 'diamond')
 
-    if distro == 'Ubuntu':
-        data_files.append(('/etc/init',
-                           ['debian/upstart/diamond.conf']))
-    if distro in ['centos', 'redhat', 'debian']:
-        data_files.append(('/etc/init.d',
-                           ['bin/init.d/diamond']))
-        data_files.append(('/var/log/diamond',
-                           ['.keep']))
-        if distro_major_version >= '6' and not distro == 'debian':
-            data_files.append(('/etc/init',
-                               ['rpm/upstart/diamond.conf']))
+data_files.append((config_path, glob('conf/*.conf.*')))
+data_files.append((os.path.join(config_path, 'collectors'), glob('conf/collectors')))
+data_files.append((os.path.join(config_path, 'handlers'), glob('conf/handlers')))
+
+if not os.getenv('VIRTUAL_ENV', None):
+    if platform.dist()[0] == 'Ubuntu':
+        data_files.append(('/etc/init', ['debian/upstart/diamond.conf']))
+    if platform.dist()[0] in ['centos', 'redhat']:
+        data_files.append(('/etc/init.d', ['bin/init.d/diamond']))
+        data_files.append(('/var/log/diamond', ['.keep']))
+        if platform.dist()[1].split('.')[0] >= '6':
+            data_files.append(('/etc/init', ['rpm/upstart/diamond.conf']))
 
 # Support packages being called differently on different distros
 if distro in ['centos', 'redhat']:
@@ -100,7 +93,7 @@ def pkgPath(root, path, rpath="/"):
         if os.path.isdir(subpath):
             pkgPath(root, subpath, spath)
 
-#pkgPath('share/diamond/collectors', 'src/collectors')
+pkgPath('share/diamond/collectors', 'src/collectors')
 
 version = get_version()
 

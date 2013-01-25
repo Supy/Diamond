@@ -26,6 +26,9 @@ pid_file = /var/run/diamond.pid
 # use the paths defined by the DIAMOND_ROOT and DIAMOND_CONFIG_DIR
 # environmental variables to load collectors and the configs respectively.
 #
+# YOU NEED TO COMMENT THESE PATHS OUT IF YOU INTEND TO USE THE DIAMOND_ROOT
+# AND DIAMOND_CONFIG_DIR ENVIRONMENTAL VARIABLES!
+#
 # e.g. if you set DIAMOND_ROOT to /home/diamond/ Diamond will look for
 # collectors in /home/diamond/collectors
 
