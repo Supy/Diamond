@@ -93,7 +93,7 @@ def pkgPath(root, path, rpath="/"):
         if os.path.isdir(subpath):
             pkgPath(root, subpath, spath)
 
-pkgPath('share/diamond/collectors', 'src/collectors')
+pkgPath('share/diamond/collectors', 'src/collectors', rpath='' if platform.system()=='Windows' else '/')
 
 version = get_version()
 
