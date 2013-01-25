@@ -72,28 +72,21 @@ def get_version():
     return version
 
 
-def pkgPath(root, path, rpath="/"):
+def pkgPath(destination_path, src_path):
     """
         Package up a path recursively
     """
-    global data_files
-    if not os.path.exists(path):
-        return
-    files = []
-    for spath in os.listdir(path):
-        subpath = os.path.join(path, spath)
-        spath = os.path.join(rpath, spath)
-        if os.path.isfile(subpath):
-            files.append(subpath)
+    file_list = []
+    if os.path.exists(src_path):
+        for root, dirnames, filenames in os.walk(src_path):
+            matches = []
+            for filename in filenames:
+                matches.append(os.path.join(root, filename))
+            file_list.append((os.path.join(destination_path, root.replace(src_path, '').strip(os.sep)), matches))
 
-    data_files.append((root + rpath, files))
-    for spath in os.listdir(path):
-        subpath = os.path.join(path, spath)
-        spath = os.path.join(rpath, spath)
-        if os.path.isdir(subpath):
-            pkgPath(root, subpath, spath)
+    return file_list
 
-pkgPath('share/diamond/collectors', 'src/collectors', rpath='' if platform.system()=='Windows' else '/')
+data_files.extend(pkgPath(os.path.join('share', 'diamond', 'collectors'), os.path.join('src', 'collectors')))
 
 version = get_version()
 
