@@ -55,19 +55,19 @@ class Server(object):
 
         if 'collectors_path' not in config['server']:
             if not self.diamond_root:
-                self.log.error('Could not determine the directory path of %s. Please set it in diamond.conf or set the DIAMOND_ROOT environmental variable.' % pathname)
+                self.log.error('Could not determine the directory path of %s. Please set it in diamond.conf or set the DIAMOND_ROOT environmental variable.' % 'collectors_path')
                 sys.exit(1)
             config['server']['collectors_path'] = os.path.join(self.diamond_root, 'collectors')
 
         if 'collectors_config_path' not in config['server']:
             if not self.config_root:
-                self.log.error('Could not determine the directory path of %s. Please set it in diamond.conf or set the DIAMOND_CONFIG_DIR environmental variables.' % pathname)
+                self.log.error('Could not determine the directory path of %s. Please set it in diamond.conf or set the DIAMOND_CONFIG_DIR environmental variables.' % 'collectors_config_path')
                 sys.exit(1)
             config['server']['collectors_config_path'] = os.path.join(self.config_root, 'collectors')
 
         if 'handlers_config_path' not in config['server']:
             if not self.config_root:
-                self.log.error('Could not determine the directory path of %s. Please set it in diamond.conf or set the DIAMOND_CONFIG_DIR environmental variables.' % pathname)
+                self.log.error('Could not determine the directory path of %s. Please set it in diamond.conf or set the DIAMOND_CONFIG_DIR environmental variables.' % 'handlers_config_path')
                 sys.exit(1)
             config['server']['handlers_config_path'] = os.path.join(self.config_root, 'handlers')
 
